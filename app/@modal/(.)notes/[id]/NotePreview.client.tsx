@@ -1,47 +1,55 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchNoteById } from "@/lib/api";
-import type { Note } from "@/types/note";
+import { fetchNoteById } from "@/lib/api/clientApi";
+import css from "./NotePreview.module.css";
 import Modal from "@/components/Modal/Modal";
-import NotePreview from "@/components/NotePreview/NotePreview";
 
-export default function NotePreviewClient({ id }: { id: string }) {
+export default function NotePreview() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const { data, isLoading, isError, error } = useQuery<Note>({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["note", id],
     queryFn: () => fetchNoteById(id),
-    refetchOnMount: false, 
+    refetchOnMount: false,
   });
 
+  if (isLoading) { return (<p>Loading, please wait...</p>) };
+  if (isError) { return (<p>Something went wrong.</p>) };
+
+  const formatDate = (isoDate: string) => {
+    return new Date(isoDate).toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const onClose = () => {
+    router.back();
+  };
+
   return (
-    <Modal open onClose={() => router.back()}>
-      {isLoading ? (
-        <p style={{ padding: 16 }}>Loading, please wait...</p>
-      ) : isError ? (
-        <div style={{ padding: 16 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: "transparent",
-              border: "none",
-              textDecoration: "underline",
-              cursor: "pointer",
-              marginBottom: 8,
-            }}
-            aria-label="Close"
-          >
-            ← Back
-          </button>
-          <p style={{ color: "#b91c1c" }}>
-            {(error as Error)?.message ?? "Failed to load note"}
-          </p>
-        </div>
-      ) : (
-        <NotePreview note={data ?? null} onBack={() => router.back()} />
-      )}
+    <Modal onClose={onClose} isOpen={true}>
+      <div className={css.container}>
+        {data && (
+          <div className={css.item}>
+            <div className={css.header}>
+              <h2>{data.title}</h2>
+            </div>
+            <p className={css.content}>{data.content}</p>
+            <p className={css.tag}>{data.tag}</p>
+            <p className={css.date}>{formatDate(data.createdAt)}</p>
+          </div>
+        )}
+      </div>
+      <button onClick={onClose} type="button" className={css.backBtn}>
+        Back
+      </button>
     </Modal>
   );
 }

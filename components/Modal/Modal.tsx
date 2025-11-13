@@ -1,63 +1,51 @@
-"use client";
+import { useEffect } from "react"
+import { createPortal } from "react-dom"
+import css from "./Modal.module.css"
 
-import { ReactNode, useEffect } from "react";
-import css from "./Modal.module.css";
+interface ModalProps {
+    isOpen: boolean,
+    onClose: () => void,
+    children: React.ReactNode,
+}
 
-export default function Modal({
-  open,
-  onClose,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  children: ReactNode;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("keydown", onKey);
+export default function Modal({onClose, isOpen, children}: ModalProps) {
+
+    const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
     }
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("keydown", onKey);
-      }
-    };
-  }, [open, onClose]);
+  };
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!isOpen) { return };
+	  const handleKeyDown = (e: KeyboardEvent) => {
+	    if (e.key === "Escape") {
+	      onClose();
+	    }
+	  };
+	
+	  document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+	
+	  return () => {
+	    document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
 
-  const stop = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
+	  };
+  }, [isOpen, onClose]);
 
-  return (
-    <div
-      className={css.backdrop}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className={css.modal} onClick={stop}>
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 12,
-            background: "transparent",
-            border: "none",
-            fontSize: 20,
-            color: "#6c757d",
-            cursor: "pointer",
-            lineHeight: 1,
-          }}
+    if (!isOpen) {return null};
+
+
+    return createPortal(
+        <div
+            onClick={handleBackdropClick}
+            className={css.backdrop}
+            role="dialog"
+            aria-modal="true"
         >
-          ×
-        </button>
-        {children}
-      </div>
-    </div>
-  );
+            <div className={css.modal}>
+                {children}
+            </div>
+        </div>, document.body)
 }

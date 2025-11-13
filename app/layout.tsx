@@ -1,59 +1,54 @@
-import type { ReactNode } from 'react';
-import type { Metadata } from 'next';
-import { Roboto } from 'next/font/google';
-import { SITE } from '@/lib/config';
-import { TanStackProvider } from '@/components/TanStackProvider/TanStackProvider';
-import Header from '@/components/Header/Header';
-import { Footer } from '@/components/Footer/Footer';
-import './globals.css';
+import type { Metadata } from "next";
+import { Roboto } from "next/font/google"
+import "./globals.css";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
+import TanStackProvider from "../components/TanStackProvider/TanStackProvider"
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
-const roboto = Roboto({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['400', '500', '700'],
-  variable: '--font-roboto',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
-  title: SITE.name,
-  description: SITE.description,
-  metadataBase: new URL(SITE.baseUrl),
+  title: "NoteHub",
+  description: "A web app for creating, editing, and saving notes with a simple interface and quick access to your entries.",
   openGraph: {
-    title: SITE.name,
-    description: SITE.description,
-    url: SITE.baseUrl,
-    images: [{ url: SITE.ogImage }],
-    siteName: SITE.name,
-    type: 'website',
-  },
+    title: `NoteHub`,
+    description: "A web app for creating, editing, and saving notes with a simple interface and quick access to your entries.",
+    url: `https://notehub.com`,
+    images: [
+      {
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: "NoteHub",
+        },
+    ]
+  }
 };
+
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+})
 
 export default function RootLayout({
   children,
   modal,
-}: {
-  children: ReactNode;
-  modal: ReactNode;
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={roboto.variable}>
+      <body style={{ overflow: "scroll" }} className={roboto.variable}>
         <TanStackProvider>
-          <div
-            style={{
-              minHeight: '100vh',
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: '#f8f9fa',
-            }}
-          >
+          <AuthProvider>
             <Header />
-            <main style={{ flex: 1, position: 'relative' }}>
               {children}
               {modal}
-            </main>
             <Footer />
-          </div>
+          </AuthProvider>
         </TanStackProvider>
       </body>
     </html>

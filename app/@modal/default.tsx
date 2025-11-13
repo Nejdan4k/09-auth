@@ -1,4 +1,3 @@
-export default function ModalDefault() {
-  // коли модальне вікно неактивне — нічого не показуємо
-  return null;
-}
+const Default = () => null;
+
+export default Default

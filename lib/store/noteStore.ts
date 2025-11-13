@@ -1,37 +1,30 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
-type NoteTag = "Work" | "Personal" | "Todo" | "Meeting" | "Shopping";
+import {create} from 'zustand';
+import {persist} from 'zustand/middleware';
+import type { createNoteProps } from '../api/clientApi';
 
-interface Draft {
-  title: string;
-  content: string;
-  tag: NoteTag;
+
+type NoteDraft = {
+    draft: createNoteProps;
+    setDraft: (draft: createNoteProps) => void;
+    clearDraft: () => void;
 }
-
-interface NoteStore {
-  draft: Draft;
-  setDraft: (note: Partial<Draft>) => void;
-  clearDraft: () => void;
-}
-
-const initialDraft: Draft = {
-  title: "",
-  content: "",
-  tag: "Todo", // виправлено: було "Work"
+const initialDraft: createNoteProps = {
+  title: '',
+  content: '',
+  tag: 'Todo',
 };
 
-export const useNoteStore = create<NoteStore>()(
-  persist(
+export const useNoteDraft = create<NoteDraft>()(persist(
     (set) => ({
-      draft: initialDraft,
-      setDraft: (note) =>
-        set((state) => ({ draft: { ...state.draft, ...note } })),
-      clearDraft: () => set({ draft: initialDraft }),
+        draft: initialDraft,
+        setDraft: (draft) => set({ draft }),
+        clearDraft: () => set({ draft: initialDraft }),
     }),
     {
-      name: "note-draft-storage",
-      partialize: (state) => ({ draft: state.draft }), //  зберігається лише draft
+        name: 'note-draft',
+        partialize: (state) => ({ draft: state.draft }),
     }
-  )
-);
+));
+ 
+ 
