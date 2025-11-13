@@ -1,60 +1,55 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 import { Roboto } from 'next/font/google';
-import './globals.css';
 
-import Header from '@/components/Header/Header';
-import TanStackProvider from '@/components/TanStackProvider/TanStackProvider';
-import Footer from '@/components/Footer/Footer';
-import AuthProvider from '@/components/AuthProvider/AuthProvider';
+import "./globals.css";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
+import QueryProvider from "@/components/TanStackProvider/TanStackProvider";
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
 const roboto = Roboto({
-  variable: '--font-roboto',
+  subsets: ['latin'], 
   weight: ['400', '700'],
-  subsets: ['latin'],
+  variable: '--font-roboto', 
+  display: 'swap', 
 });
 
 export const metadata: Metadata = {
-  title: 'Note HUB',
-  description:
-    'Application for creating, viewing and editing notes. Created in GoIT',
+  title: "NoteHub - Your notes online",
+  description: "NoteHub – save, edit and organise your notes quickly and conveniently.",
   openGraph: {
-    title: 'Note HUB',
-    description:
-      'Application for creating, viewing and editing notes. Created in GoIT',
-    url: process.env.NEXT_PUBLIC_API_URL,
-    siteName: 'Note HUB app',
+    title: "NoteHub - Your notes online",
+    description: "NoteHub – save, edit and organise your notes quickly and conveniently.",
     images: [
       {
         url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+        alt: 'NoteHub',
         width: 1200,
         height: 630,
-        alt: 'Note HUB app image',
-      },
-    ],
-    type: 'website',
-  },
+      }
+    ]
+  }
 };
 
 export default function RootLayout({
   children,
-  modal,
+  modal
 }: Readonly<{
   children: React.ReactNode;
-  modal: React.ReactNode;
+  modal: React.ReactNode
 }>) {
   return (
     <html lang="en">
       <body className={`${roboto.variable}`}>
-        <TanStackProvider>
-          <AuthProvider>
+        <AuthProvider requireAuth={false}>
+          <QueryProvider>
             <Header />
-            <main>
-              {children}
-              {modal}
-            </main>
+            {children}
+            {modal}
             <Footer />
-          </AuthProvider>
-        </TanStackProvider>
+          </QueryProvider>
+        </AuthProvider>
+        <div id="modal-root" />
       </body>
     </html>
   );

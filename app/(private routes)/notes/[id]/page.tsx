@@ -1,49 +1,67 @@
-import {
-  QueryClient,
-  HydrationBoundary,
-  dehydrate,
-} from '@tanstack/react-query';
-import type { Metadata } from 'next';
-import { fetchNoteById } from '@/lib/api/serverApi';
-import NoteDetailsClient from './NoteDetails.client';
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { fetchNoteByIdServer } from "@/lib/api/serverApi"; 
+import NoteDetailsClient from "./NoteDetails.client";
+import { Metadata } from "next";
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  try {
+    const { id } = await params;
+    const note = await fetchNoteByIdServer(id);
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+    const shortDescription = note.content.length > 150
+      ? note.content.substring(0, 150).trim() + "..."
+      : note.content;
 
-  const note = await fetchNoteById(id);
+    const pageUrl = `https://09-auth-phi-teal.vercel.app/notes/${id}`;
 
-  return {
-    title: `Note ${note.title}`,
-    description: note.content.slice(0, 30),
-    openGraph: {
-      title: `Note ${note.title}`,
-      description: note.content.slice(0, 30),
-      url: `${process.env.NEXT_PUBLIC_API_URL}/notes/${id}`,
-      siteName: 'Note HUB app',
-      images: [
-        {
-          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-          width: 1200,
-          height: 630,
-          alt: 'Note HUB app image',
-        },
-      ],
-      type: 'website',
-    },
-  };
+    return {
+      title: note.title,
+      description: shortDescription,
+      openGraph: {
+        title: note.title,
+        description: shortDescription,
+        url: pageUrl,
+        images: [
+          {
+            url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+            width: 1200,
+            height: 630,
+            alt: note.title,
+          },
+        ],
+        type: "article",
+      },
+    };
+  } catch (error) {
+    console.error("Error generating metadata:", error);
+
+    return {
+      title: "Note not found",
+      description: "The requested note does not exist or has been deleted",
+      openGraph: {
+        title: "Note not found",
+        description: "The requested note does not exist or has been deleted",
+        url: "https://08-zustand-smoky.vercel.app/notes",
+        images: [
+          {
+            url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+            width: 1200,
+            height: 630,
+            alt: "NoteHub",
+          },
+        ],
+      },
+    };
+  }
 }
 
-const NoteDetails = async ({ params }: Props) => {
-  const { id } = await params;
+export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {
   const queryClient = new QueryClient();
+  const { id } = await params;
 
   await queryClient.prefetchQuery({
-    queryKey: ['note', id],
-    queryFn: () => fetchNoteById(id),
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteByIdServer(id), 
   });
 
   return (
@@ -51,6 +69,4 @@ const NoteDetails = async ({ params }: Props) => {
       <NoteDetailsClient />
     </HydrationBoundary>
   );
-};
-
-export default NoteDetails;
+}

@@ -1,78 +1,81 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { login, LoginRequest } from '@/lib/api/clientApi';
-import { ApiError } from '@/app/api/api';
-import { useAuthStore } from '@/lib/store/authStore';
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import css from './SignInPage.module.css'
+import { loginUser } from '@/lib/api/clientApi'
+import { AxiosError } from 'axios'
+import { useAuthStore } from '@/lib/store/authStore'
+import { User } from '@/types/user'
 
-import css from './SignInPage.module.css';
+export default function SignInPage() {
+  const router = useRouter()
+  const { setUser } = useAuthStore()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
-const SignIn = () => {
-  const router = useRouter();
-  const [error, setError] = useState('');
-
-  const setUser = useAuthStore(state => state.setUser);
-
-  const handleSubmit = async (formData: FormData) => {
+  const handleLogin = async (email: string, password: string) => {
+    setError('')
     try {
-      const formValues = Object.fromEntries(formData) as LoginRequest;
-      const res = await login(formValues);
-      if (res) {
-        setUser(res);
-        router.refresh();
-        router.push('/profile');
+      const userData: User = await loginUser({ email, password })
+      setUser(userData)
+      router.push('/profile')
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.error || 'Login failed')
+      } else if (err instanceof Error) {
+        setError(err.message)
       } else {
-        setError('Invalid email or password');
+        setError('An unexpected error occurred')
       }
-    } catch (error) {
-      setError(
-        (error as ApiError).response?.data?.error ??
-          (error as ApiError).message ??
-          'Oops... some error'
-      );
     }
-  };
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleLogin(email, password)
+  }
 
   return (
-    <>
-      <main className={css.mainContent}>
-        <form action={handleSubmit} className={css.form}>
-          <h1 className={css.formTitle}>Sign in</h1>
+    <main className={css.mainContent}>
+      <form className={css.form} onSubmit={handleSubmit}>
+        <h1 className={css.formTitle}>Sign in</h1>
 
-          <div className={css.formGroup}>
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              className={css.input}
-              required
-            />
-          </div>
+        <div className={css.formGroup}>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            className={css.input}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-          <div className={css.formGroup}>
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              className={css.input}
-              required
-            />
-          </div>
+        <div className={css.formGroup}>
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            className={css.input}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-          <div className={css.actions}>
-            <button type="submit" className={css.submitButton}>
-              Log in
-            </button>
-          </div>
+        <div className={css.actions}>
+          <button type="submit" className={css.submitButton}>
+            Log in
+          </button>
+        </div>
 
-          {error && <p className={css.error}>{error}</p>}
-        </form>
-      </main>
-    </>
-  );
-};
-
-export default SignIn;
+        {error && <p className={css.error}>{error}</p>}
+      </form>
+    </main>
+  )
+}

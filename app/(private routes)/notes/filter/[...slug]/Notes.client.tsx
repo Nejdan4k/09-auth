@@ -1,80 +1,98 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useDebouncedCallback } from 'use-debounce';
-import toast, { Toaster } from 'react-hot-toast';
-import Link from 'next/link';
-import { fetchNotes, NotesHttpResponse } from '@/lib/api/clientApi';
+import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useDebounce } from "use-debounce";
+import NoteList from "@/components/NoteList/NoteList";
+import Pagination from "@/components/Pagination/Pagination";
+import SearchBox from "@/components/SearchBox/SearchBox";
+import { fetchNotes } from "@/lib/api/clientApi";
+import css from './NotesPage.module.css'
+import type { FetchNotesResponse } from "@/lib/api/clientApi";
+import { Toaster, toast } from "react-hot-toast";
+import { NoteTag } from "@/types/note";
+import Link from "next/link";
 
-import css from './NotesPage.module.css';
+const PER_PAGE = 12;
 
-import NoteList from '@/components/NoteList/NoteList';
-import ErrorMessage from '@/components/ErrorMessage/ErrorMessage';
-import Loader from '@/components/Loader/Loader';
-import Pagination from '@/components/Pagination/Pagination';
-import SearchBox from '@/components/SearchBox/SearchBox';
-
-interface AppClientProps {
-  tag: string | undefined;
+interface NotesClientProps {
+  initialData: FetchNotesResponse;
+  tag?: NoteTag;
 }
 
-export default function AppClient({ tag }: AppClientProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-
-  const saveDebouncedQuery = useDebouncedCallback((query: string) => {
-    setDebouncedQuery(query);
-  }, 300);
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-    saveDebouncedQuery(event.target.value);
-    setCurrentPage(1);
-  };
-
-  const { data, isLoading, isError, isSuccess } = useQuery<NotesHttpResponse>({
-    queryKey: ['notes', { query: debouncedQuery, page: currentPage, tag }],
-    queryFn: () => fetchNotes(debouncedQuery, currentPage, tag),
+const NotesClient: React.FC<NotesClientProps> = ({ initialData, tag }) => {
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(initialData.totalPages);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 500);
+  
+  const { data, isLoading, isError, error } = useQuery<FetchNotesResponse | null, Error>({
+    queryKey: ["notes", page, PER_PAGE, debouncedSearch, tag],
+    queryFn: () => fetchNotes({
+      page,
+      perPage: PER_PAGE,
+      search: debouncedSearch,
+      ...(tag ? { tag } : {}) 
+    }),
     placeholderData: keepPreviousData,
-    refetchOnMount: false,
+    initialData: page === 1 && !debouncedSearch ? initialData : undefined,
   });
 
-  const totalPages = data?.totalPages ?? 0;
+
 
   useEffect(() => {
-    if (isSuccess && data?.notes.length === 0) {
-      toast.error('No notes found for your request.');
+    if (data?.totalPages !== undefined) {
+      setPageCount(data.totalPages);
     }
-  }, [isSuccess, data]);
+  }, [data]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (isError && error) {
+      if (error.message.includes('Access token is missing or empty')) {
+        toast.error(error.message);
+      } else if (error.message.includes("Failed to execute 'setRequestHeader'")) {
+        toast.error("Invalid token. Please check your settings or update the token.");
+      }
+    }
+  }, [isError, error]);
+
+
 
   return (
-    <>
-      <div className={css.app}>
-        <header className={css.toolbar}>
-          {<SearchBox searchQuery={query} onChange={handleChange} />}
-          {isSuccess && totalPages > 1 && (
-            <Pagination
-              totalPages={totalPages}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-            />
-          )}
-          {
-            <Link className={css.button} href="/notes/action/create">
-              Create note +
-            </Link>
-          }
-        </header>
-        {isError ? (
-          <ErrorMessage />
-        ) : (
-          data && data.notes.length > 0 && <NoteList notes={data.notes} />
+    <div className={css.app}>
+      <Toaster position="top-center" />
+      <header className={css.toolbar}>
+        <SearchBox value={search} onChange={setSearch} />
+
+        {pageCount > 1 && (
+          <Pagination page={page} setPage={setPage} pageCount={pageCount} />
         )}
-        {isLoading && <Loader />}
-      </div>
-      <Toaster />
-    </>
+
+        <Link href="/notes/action/create" className={css.button}>
+          Create note +
+        </Link>
+      </header>
+
+      {isLoading && <p>Loading notes...</p>}
+      {isError && error &&
+        !error.message.includes('Access token is missing or empty') &&
+        !error.message.includes("Failed to execute 'setRequestHeader'") && (
+          <p className={css.error}>{error.message}</p>
+        )}
+      {!isLoading && !isError && data && data.notes && data.notes.length === 0 && <p>No notes found</p>} 
+      {!isLoading && !isError && data && data.notes && data.notes.length > 0 && (
+        <NoteList
+          notes={data.notes}
+        />
+      )}
+
+
+    </div>
   );
-}
+};
+
+export default NotesClient; 

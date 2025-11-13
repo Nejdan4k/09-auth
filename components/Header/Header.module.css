@@ -24,21 +24,15 @@
   padding: 0;
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 
-.navigation li a,
-.navigationLink {
+.navigation li a {
   text-decoration: none;
   color: white;
   font-size: 1rem;
 }
 
-.navigation li a:hover,
-.navigationLink:hover {
+.navigation li a:hover {
   color: #ddd;
-}
-
-.navigationItem {
-  display: flex;
-  align-items: center;
 }

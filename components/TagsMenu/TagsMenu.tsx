@@ -1,42 +1,36 @@
-'use client';
-import { useEffect, useState } from 'react';
+'use client'
 import Link from 'next/link';
-import { getTags } from '@/lib/api/clientApi';
+import css from './TagsMenu.module.css'
+import type { NoteTag } from "@/types/note";
+import { useState } from 'react';
 
-import css from './TagsMenu.module.css';
 
-const TagsMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const toggle = () => setIsOpen(!isOpen);
+export default function TagsMenu(){
 
-  const [tags, setTags] = useState<string[]>([]);
-
-  useEffect(() => {
-    getTags().then(data => setTags(data));
-  }, []);
-
-  return (
-    <div className={css.menuContainer}>
-      <button onClick={toggle} className={css.menuButton}>
-        Notes ▾
-      </button>
-      {isOpen && (
-        <ul className={css.menuList}>
-          {tags.map(tag => (
-            <li key={tag} className={css.menuItem}>
-              <Link
-                href={`/notes/filter/${tag}`}
-                className={css.menuLink}
-                onClick={toggle}
-              >
-                {tag}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-export default TagsMenu;
+const tags: NoteTag[] = ["Todo", "Work", "Personal", "Meeting", "Shopping"];
+const [isOpen, setOpen] = useState(false)
+    return(
+        <div className={css.menuContainer}>
+    <button className={css.menuButton} onClick={() => setOpen(!isOpen)}>
+    Notes ▾
+    </button>
+    {isOpen && (
+    <ul className={css.menuList}>
+        <li className={css.menuItem}>
+        <Link href="/notes/filter/All" className={css.menuLink} 
+        onClick={() => setOpen(false)}>
+            All 
+        </Link>
+        </li>
+        {tags.map((tag) => (
+        <li key={tag} className={css.menuItem}>
+            <Link href={`/notes/filter/${tag}`} className={css.menuLink} onClick={() => setOpen(false)}>
+            {tag}
+            </Link>
+        </li>
+        ))}
+    </ul>
+    )}
+</div>
+    )
+}

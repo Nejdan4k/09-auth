@@ -1,33 +1,31 @@
-'use client';
+'use client'
 
-import { checkSession, getMe } from '@/lib/api/clientApi';
-import { useAuthStore } from '@/lib/store/authStore';
-import { useEffect } from 'react';
+import React, { useEffect, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/lib/store/authStore'
+import { getSession } from '@/lib/api/clientApi'
 
-type Props = {
-  children: React.ReactNode;
-};
+interface AuthProviderProps {
+  children: ReactNode
+  requireAuth?: boolean
+}
 
-const AuthProvider = ({ children }: Props) => {
-  const setUser = useAuthStore(state => state.setUser);
-  const clearIsAuthenticated = useAuthStore(
-    state => state.clearIsAuthenticated
-  );
+export default function AuthProvider({ children, requireAuth = false }: AuthProviderProps) {
+  const router = useRouter()
+  const { setUser } = useAuthStore()
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const isAuthenticated = await checkSession();
-      if (isAuthenticated) {
-        const user = await getMe();
-        if (user) setUser(user);
-      } else {
-        clearIsAuthenticated();
+    const checkAuth = async () => {
+      try {
+        const user = await getSession()
+        setUser(user)
+      } catch {
+        setUser(null)
+        if (requireAuth) router.push('/sign-in')
       }
-    };
-    fetchUser();
-  }, [setUser, clearIsAuthenticated]);
+    }
+    checkAuth()
+  }, [requireAuth, router, setUser])
 
-  return children;
-};
-
-export default AuthProvider;
+  return <>{children}</>
+}
