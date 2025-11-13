@@ -12,37 +12,32 @@ export async function GET() {
     const refreshToken = cookieStore.get("refreshToken")?.value;
 
     if (accessToken) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
     if (refreshToken) {
       const apiRes = await api.get("auth/session", {
-        headers: {
-          Cookie: cookieStore.toString(),
-        },
+        headers: { Cookie: `refreshToken=${refreshToken}` },
+        withCredentials: true,
       });
 
       const setCookie = apiRes.headers["set-cookie"];
-
       if (setCookie) {
         const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
         for (const cookieStr of cookieArray) {
           const parsed = parse(cookieStr);
-
           const options = {
             expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
             path: parsed.Path,
-            maxAge: Number(parsed["Max-Age"]),
+            maxAge: parsed["Max-Age"] ? Number(parsed["Max-Age"]) : undefined,
           };
-
-          if (parsed.accessToken)
-            cookieStore.set("accessToken", parsed.accessToken, options);
-          if (parsed.refreshToken)
-            cookieStore.set("refreshToken", parsed.refreshToken, options);
+          if (parsed.accessToken) cookieStore.set("accessToken", parsed.accessToken, options);
+          if (parsed.refreshToken) cookieStore.set("refreshToken", parsed.refreshToken, options);
         }
         return NextResponse.json({ success: true }, { status: 200 });
       }
     }
+
     return NextResponse.json({ success: false }, { status: 200 });
   } catch (error) {
     if (isAxiosError(error)) {

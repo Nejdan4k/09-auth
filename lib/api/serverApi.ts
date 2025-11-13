@@ -45,7 +45,7 @@ const fetchParams:FetchParams = {
     tag:tag,
     page: page,
     search: keyWord,
-    perPage: 9, 
+    perPage: 12, 
     },
     headers: {
         Cookie:cookieStore.toString()
