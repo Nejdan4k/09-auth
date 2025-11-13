@@ -1,50 +1,18 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { api } from "../../api";
-import { parse } from "cookie";
-import { isAxiosError } from "axios";
-import { logErrorResponse } from "../../_utils/utils";
+import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 
-export async function GET() {
-  try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-    const refreshToken = cookieStore.get("refreshToken")?.value;
+export async function GET(req: NextRequest) {
+  const cookie = req.headers.get("cookie") ?? "";
+  const upstream = await fetch("https://notehub-api.goit.study/auth/session", {
+    method: "GET",
+    headers: { cookie },
+    credentials: "include",
+    cache: "no-store",
+  });
 
-    if (accessToken) {
-      return NextResponse.json({ success: true }, { status: 200 });
-    }
-
-    if (refreshToken) {
-      const apiRes = await api.get("auth/session", {
-        headers: { Cookie: `refreshToken=${refreshToken}` },
-        withCredentials: true,
-      });
-
-      const setCookie = apiRes.headers["set-cookie"];
-      if (setCookie) {
-        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
-        for (const cookieStr of cookieArray) {
-          const parsed = parse(cookieStr);
-          const options = {
-            expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
-            path: parsed.Path,
-            maxAge: parsed["Max-Age"] ? Number(parsed["Max-Age"]) : undefined,
-          };
-          if (parsed.accessToken) cookieStore.set("accessToken", parsed.accessToken, options);
-          if (parsed.refreshToken) cookieStore.set("refreshToken", parsed.refreshToken, options);
-        }
-        return NextResponse.json({ success: true }, { status: 200 });
-      }
-    }
-
-    return NextResponse.json({ success: false }, { status: 200 });
-  } catch (error) {
-    if (isAxiosError(error)) {
-      logErrorResponse(error.response?.data);
-      return NextResponse.json({ success: false }, { status: 200 });
-    }
-    logErrorResponse({ message: (error as Error).message });
-    return NextResponse.json({ success: false }, { status: 200 });
-  }
+  const data = await upstream.json().catch(() => ({}));
+  const res = NextResponse.json(data, { status: upstream.status });
+  const setCookie = upstream.headers.get("set-cookie");
+  if (setCookie) res.headers.set("set-cookie", setCookie);
+  return res;
 }
