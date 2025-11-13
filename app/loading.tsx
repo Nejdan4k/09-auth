@@ -1,5 +1,6 @@
-export default function Loader(){
-    return(
-        <p>Loading, please wait...</p>
-    )
+export default function Loading() {
+    return (
+        <div style={{ padding: "15px", textAlign: "center" }}>
+            <p>Loading, please wait...</p>
+        </div>)
 }

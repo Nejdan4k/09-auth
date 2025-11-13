@@ -1,31 +1,40 @@
-'use client'
 
-import React, { useEffect, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/lib/store/authStore'
-import { getSession } from '@/lib/api/clientApi'
+'use client';
 
-interface AuthProviderProps {
-  children: ReactNode
-  requireAuth?: boolean
-}
+import { checkSession, getUser } from '@/lib/api/clientApi';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useEffect, useState } from 'react';
 
-export default function AuthProvider({ children, requireAuth = false }: AuthProviderProps) {
-  const router = useRouter()
-  const { setUser } = useAuthStore()
+type Props = {
+  children: React.ReactNode;
+};
+
+export default function AuthProvider({ children }: Props){
+  const setUser = useAuthStore((state) => state.setUser);
+  const clearIsAuthenticated = useAuthStore((state) => state.clearIsAuthenticated);
+  const [isLoading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const user = await getSession()
-        setUser(user)
-      } catch {
-        setUser(null)
-        if (requireAuth) router.push('/sign-in')
+    const fetchUser = async () => {
+    setLoading(true)
+    try {
+      const isAuthenticated = await checkSession();
+      if (isAuthenticated) {
+        const user = await getUser();
+        if (user) setUser(user);
+      } else {
+        clearIsAuthenticated();
       }
+    } catch (err) {
+      alert(`AuthProvider error:${err}`);
+      clearIsAuthenticated();
+    } finally {
+      setLoading(false)
     }
-    checkAuth()
-  }, [requireAuth, router, setUser])
+    };
+    fetchUser();
 
-  return <>{children}</>
-}
+  }, [setUser, clearIsAuthenticated]);
+
+  return (isLoading ? <div>Loading...</div> : <>{children}</>)
+};

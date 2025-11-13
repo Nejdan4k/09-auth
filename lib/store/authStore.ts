@@ -1,32 +1,16 @@
-import { create } from 'zustand'
-import { getMe, logoutUser } from '@/lib/api/clientApi'
-import { User } from '@/types/user'
+import { User } from "@/types/user";
+import { create } from "zustand";
 
-interface AuthState {
-  isAuthenticated: boolean
-  user: User | null
-  setUser: (user: User | null) => void
-  logout: () => Promise<void>
-  loadUser: () => Promise<void>
+interface AuthStore{
+    user: User | null,
+    isAuthenticated: boolean,
+    setUser: (user: User) => void,
+    clearIsAuthenticated: () => void,
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
-  isAuthenticated: false,
-  user: null,
-
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-
-  logout: async () => {
-    await logoutUser() 
-    set({ user: null, isAuthenticated: false })
-  },
-
-  loadUser: async () => {
-    try {
-      const user = await getMe()
-      set({ user, isAuthenticated: true })
-    } catch {
-      set({ user: null, isAuthenticated: false })
-    }
-  },
+export const useAuthStore = create<AuthStore>()((set) => ({
+    user: null,
+    isAuthenticated: false,
+    setUser: (user) => set({ user: user, isAuthenticated: true}),
+    clearIsAuthenticated: () => set({ user: null, isAuthenticated: false }),
 }))

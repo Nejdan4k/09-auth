@@ -1,55 +1,55 @@
 import type { Metadata } from "next";
-import { Roboto } from 'next/font/google';
-
+import { Roboto } from "next/font/google"
 import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
-import QueryProvider from "@/components/TanStackProvider/TanStackProvider";
+import TanStackProvider from "../components/TanStackProvider/TanStackProvider"
 import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
-const roboto = Roboto({
-  subsets: ['latin'], 
-  weight: ['400', '700'],
-  variable: '--font-roboto', 
-  display: 'swap', 
-});
 
 export const metadata: Metadata = {
-  title: "NoteHub - Your notes online",
-  description: "NoteHub – save, edit and organise your notes quickly and conveniently.",
+  title: "NoteHub",
+  description: "A web app for creating, editing, and saving notes with a simple interface and quick access to your entries.",
   openGraph: {
-    title: "NoteHub - Your notes online",
-    description: "NoteHub – save, edit and organise your notes quickly and conveniently.",
+    title: `NoteHub`,
+    description: "A web app for creating, editing, and saving notes with a simple interface and quick access to your entries.",
+    url: `https://notehub.com`,
     images: [
       {
-        url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-        alt: 'NoteHub',
-        width: 1200,
-        height: 630,
-      }
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: "NoteHub",
+        },
     ]
   }
 };
 
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+})
+
 export default function RootLayout({
   children,
-  modal
+  modal,
 }: Readonly<{
   children: React.ReactNode;
-  modal: React.ReactNode
+  modal: React.ReactNode;
 }>) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable}`}>
-        <AuthProvider requireAuth={false}>
-          <QueryProvider>
+      <body style={{ overflow: "scroll" }} className={roboto.variable}>
+        <TanStackProvider>
+          <AuthProvider>
             <Header />
-            {children}
-            {modal}
+              {children}
+              {modal}
             <Footer />
-          </QueryProvider>
-        </AuthProvider>
-        <div id="modal-root" />
+          </AuthProvider>
+        </TanStackProvider>
       </body>
     </html>
   );

@@ -1,80 +1,71 @@
-'use client'
+"use client";
 
-import { AxiosError } from 'axios'
-import { registerUser } from '@/lib/api/clientApi'
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
-import css from './SignUpPage.module.css'
-import { useAuthStore } from '@/lib/store/authStore'
-import { User } from '@/types/user'
+import css from './SignUpPage.module.css';
+import { register } from '@/lib/api/clientApi';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
+import { useAuthStore } from '@/lib/store/authStore';
+
 
 export default function SignUpPage() {
-  const router = useRouter()
-  const { setUser } = useAuthStore()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const setUser = useAuthStore((state)=> state.setUser)
 
-  const handleRegister = async (email: string, password: string) => {
-    setError('')
-    try {
-      const userData: User = await registerUser({ email, password })
-      setUser(userData)
-      router.push('/profile')
-    } catch (err) {
-      if (err instanceof AxiosError) {
-        setError(err.response?.data?.error || 'Axios request failed')
-      } else if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('An unexpected error occurred')
-      }
+    const onSubmit = async (formData: FormData) => {
+        setError('')
+        try {
+            const email = formData.get('email') as string;
+            const password = formData.get('password') as string;
+            if (password.trim() === "") {
+            return setError("Password can't be empty!")
+          }
+          
+            const res = await register(email, password)
+            if (res) {
+                setUser(res)
+                router.push('/profile');
+            } else {
+                setError('Invalid email or password');
+            }
+        } catch (error) {
+
+  if (error instanceof AxiosError) {
+    const message =
+      error.response?.data?.response?.message ??
+      error.response?.data?.error ??             
+      error.message ??                           
+      'Something went wrong, try again!';
+      setError(message);
+  }else {
+    setError('Something went wrong, try again!');
+  }
+}
     }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleRegister(email, password)
-  }
 
   return (
-    <main className={css.mainContent}>
-      <h1 className={css.formTitle}>Sign up</h1>
-      <form className={css.form} onSubmit={handleSubmit}>
+<main className={css.mainContent}>
+	<form className={css.form} action={onSubmit}>
         <div className={css.formGroup}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            className={css.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+          <h1 className={css.formTitle}>Sign up</h1>
+      <label htmlFor="email">Email</label>
+      <input id="email" type="email" name="email" className={css.input} required />
+    </div>
 
-        <div className={css.formGroup}>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            className={css.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+    <div className={css.formGroup}>
+      <label htmlFor="password">Password</label>
+      <input id="password" type="password" name="password" className={css.input} required />
+    </div>
 
-        <div className={css.actions}>
-          <button type="submit" className={css.submitButton}>
-            Register
-          </button>
-        </div>
+    <div className={css.actions}>
+      <button type="submit" className={css.submitButton}>
+        Register
+      </button>
+    </div>
 
-        {error && <p className={css.error}>{error}</p>}
-      </form>
-    </main>
+    {error && <p className={css.error}>{error}</p>}
+  </form>
+</main>
   )
 }
