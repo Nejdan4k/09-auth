@@ -1,14 +1,14 @@
-import NotePreviewClient from './NotePreview.client';
-import { fetchNoteById } from '@/lib/api/serverApi';
 import {
-  dehydrate,
-  HydrationBoundary,
   QueryClient,
+  HydrationBoundary,
+  dehydrate,
 } from '@tanstack/react-query';
+import { fetchNoteById } from '@/lib/api/serverApi';
+import NotePreviewClient from './NotePreview.client';
 
-interface Props {
+type Props = {
   params: Promise<{ id: string }>;
-}
+};
 
 const NotePreview = async ({ params }: Props) => {
   const { id } = await params;

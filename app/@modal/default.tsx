@@ -1,3 +1,2 @@
 const Default = () => null;
-
-export default Default
+export default Default;

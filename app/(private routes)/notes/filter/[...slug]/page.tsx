@@ -1,56 +1,61 @@
-import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
-import NotesClient from "./Notes.client";
-import { fetchNotes } from "@/lib/api/serverApi";
-import { NoteTag } from "@/types/note";
-import type { Metadata } from "next";
+import {
+  QueryClient,
+  HydrationBoundary,
+  dehydrate,
+} from '@tanstack/react-query';
+import type { Metadata } from 'next';
+import css from './NotesPage.module.css';
+import AppClient from './Notes.client';
+import { fetchNotes } from '@/lib/api/serverApi';
 
-type Props = {
-  params: Promise<{ slug: string[] }>
-}
-
-type NotesProps = {
+type AppProps = {
   params: Promise<{ slug: string[] }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { slug } = await params;
-    const tag = slug[0] === 'All' ? 'All notes' : slug[0];
+export async function generateMetadata({
+  params,
+}: AppProps): Promise<Metadata> {
+  const { slug } = await params;
 
-    return {
-        title: `${tag} - noteHub`,
-        description: tag === 'All notes' ? 'your notes' : `Your notes with ${tag} tag.`,
-         openGraph: {
-            title: `${tag} - noteHub`,
-             description: tag === 'All notes' ? 'your notes' : `Your notes with ${tag} tag.`,
-             url: `https://08-zustand-green-pi.vercel.app/notes/filter/${slug[0]}`,
-             images: [
-                {
-                    url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-                    width: 1200,
-                    height: 630,
-                    alt: "NoteHub",
-                },
-            ]
-        }
-  }
+  const tag = slug[0];
+
+  return {
+    title: `Notes - ${tag}`,
+    description: `Notes - ${tag}`,
+    openGraph: {
+      title: `Notes - ${tag}`,
+      description: `Notes - ${tag}`,
+      url: process.env.NEXT_PUBLIC_API_URL,
+      siteName: 'Note HUB app',
+      images: [
+        {
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: 'Note HUB app image',
+        },
+      ],
+      type: 'website',
+    },
+  };
 }
 
-export default async function NotesPage({ params }: NotesProps) {
-    const queryClient = new QueryClient()
-    const {slug} = await params;
+export default async function App({ params }: AppProps) {
+  const { slug } = await params;
 
-    const tag = slug[0] === "All" ? undefined : (slug[0] as NoteTag);
+  const tag = slug[0].toLowerCase() === 'all' ? undefined : slug[0];
 
-    await queryClient.prefetchQuery({
-        queryKey: ['note', { page: 1, search: ""}, tag],
-        queryFn: ()=>fetchNotes(1, "", tag ),
-    });
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ['notes', { query: '', page: 1, tag }],
+    queryFn: () => fetchNotes('', 1, tag),
+  });
 
-    return (
-        <div>
-        <HydrationBoundary state={dehydrate(queryClient)}>
-                <NotesClient tag={tag} />
-            </HydrationBoundary>
-        </div>
-    )
+  return (
+    <div className={css.app}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <AppClient tag={tag} />
+      </HydrationBoundary>
+    </div>
+  );
 }
