@@ -5,5 +5,5 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// 👇 ТУТ ОНОВЛЮЄМО ТИП
+
 export type ApiError = AxiosError<{ error?: string }>;
