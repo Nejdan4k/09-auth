@@ -72,3 +72,8 @@ export async function patchUser(payload: { username: string }): Promise<User> {
     
     return data;
 };
+
+export async function getTags(): Promise<NoteTag[]> {
+  const { data } = await nextServer.get<NoteTag[]>('/tags');
+  return data;
+}

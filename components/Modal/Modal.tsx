@@ -1,69 +1,51 @@
-"use client";
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createPortal } from "react-dom";
-import css from "./Modal.module.css";
+import { useEffect } from "react"
+import { createPortal } from "react-dom"
+import css from "./Modal.module.css"
 
 interface ModalProps {
-  onClose?: () => void;
-  children: React.ReactNode;
+    isOpen: boolean,
+    onClose: () => void,
+    children: React.ReactNode,
 }
 
-const Modal: React.FC<ModalProps> = ({ onClose, children }) => {
-  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
-  const router = useRouter();
+export default function Modal({onClose, isOpen, children}: ModalProps) {
 
-  const handleClose = useCallback(() => {
-    if (onClose) {
+    const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
       onClose();
-    } else {
-      router.back();
-    }
-  }, [onClose, router]);
-
-  useEffect(() => {
-    setModalRoot(document.getElementById("modal-root"));
-
-    document.body.classList.add("modal-open");
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.classList.remove("modal-open");
-    };
-  }, [handleClose]);
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
     }
   };
 
-  if (!modalRoot) return null;
+  useEffect(() => {
+    if (!isOpen) { return };
+	  const handleKeyDown = (e: KeyboardEvent) => {
+	    if (e.key === "Escape") {
+	      onClose();
+	    }
+	  };
+	
+	  document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+	
+	  return () => {
+	    document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
 
-  return createPortal(
-    <div
-      className={css.backdrop}
-      role="dialog"
-      aria-modal="true"
-      onClick={handleBackdropClick}
-    >
-      <div
-        className={css.modal}
-        onClick={(e) => e.stopPropagation()} 
-      >
-        {children}
-      </div>
-    </div>,
-    modalRoot
-  );
-};
+	  };
+  }, [isOpen, onClose]);
 
-export default Modal;
+    if (!isOpen) {return null};
+
+
+    return createPortal(
+        <div
+            onClick={handleBackdropClick}
+            className={css.backdrop}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div className={css.modal}>
+                {children}
+            </div>
+        </div>, document.body)
+}

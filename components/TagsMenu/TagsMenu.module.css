@@ -11,7 +11,9 @@
     font-size: 16px;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.2s ease;
+    transition:
+        background-color 0.3s ease,
+        box-shadow 0.2s ease;
 }
 
 .menuButton:hover {
@@ -30,9 +32,7 @@
     padding: 6px 0;
     margin: 0;
     list-style: none;
-    max-width: 180px;
     z-index: 1000;
-    
 }
 
 .menuItem {
@@ -46,7 +46,6 @@
     text-decoration: none;
     font-size: 15px;
     transition: background-color 0.2s ease;
-    
 }
 
 .menuLink:hover {
